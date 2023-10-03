@@ -3,7 +3,12 @@ import shutil
 import gzip
 import pathlib
 import json
+import pytest
+import tempfile
 from bids import layout
+
+
+
 
 def get_versions():
      #collect version from pyproject.toml
@@ -78,4 +83,5 @@ def collect_anat(bids_data: pathlib.Path, suffix="T1w"):
 def collect_pet(bids_data: pathlib.Path):
     return None
 
-def 
+def associte_anat_pet(bids_data: pathlib.Path):
+    return None

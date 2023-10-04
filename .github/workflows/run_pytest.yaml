@@ -2,7 +2,7 @@ name: run_tests
 on:
   push:
   workflow_call:
-    workflow_dispatch:
+  workflow_dispatch:
     inputs:
       debug_enabled:
         type: boolean

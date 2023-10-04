@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "ingest-pet"
-version = "0.1.0"
+name = "pet-utils"
+version = "0.0.0"
 description = ""
 authors = ["Anthony Galassi <28850131+bendhouseart@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "ingest_pet"}]
+packages = [{include = "pet_utils"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

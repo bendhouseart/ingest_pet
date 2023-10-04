@@ -1,8 +1,8 @@
 import pytest
 import pathlib
 import re
-from ingest_pet.ingest_pet import get_versions, zip_nifti, write_out_dataset_description_json
-from ingest_pet.ingest_pet import collect_anat_and_pet
+from pet_utils.pet_utils import get_versions, zip_nifti, write_out_dataset_description_json
+from pet_utils.pet_utils import collect_anat_and_pet
 import subprocess
 
 project_dir = pathlib.Path(__file__).parent.parent.absolute()
@@ -39,7 +39,7 @@ def test_anat_in_first_session_folder(anat_in_first_session_folder):
             # check that at least one session contains both a pet and an anat image
             if re.search(r"ses-[^_|\/]*", str(anat_image))[0]  == re.search(r"ses-[^_|\/]*", str(pet_image))[0]:
                 anat_exists_in_one_session_folder = True
-                
+
         assert anat_exists_in_one_session_folder is True
         assert len(set_of_anat_images) == 1
         assert len(set_of_pet_images) == 1
@@ -82,4 +82,4 @@ def test_anat_in_each_session_folder(anat_in_each_session_folder):
             assert len(pet_image.parts) == len(anat_image.parts)
             assert re.search(r"ses-[^_|\/]*", str(anat_image))[0]  == re.search(r"ses-[^_|\/]*", str(pet_image))[0]
             assert re.search(r"nii|(.gz)", str(anat_image)) is not None
-    pass
+    

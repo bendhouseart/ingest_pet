@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "pet-utils"
+name = "petutils"
 version = "0.0.0"
 description = ""
 authors = ["Anthony Galassi <28850131+bendhouseart@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "pet_utils"}]
+packages = [{include = "petutils"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

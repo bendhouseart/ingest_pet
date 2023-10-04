@@ -1,8 +1,8 @@
 import pytest
 import pathlib
 import re
-from pet_utils.pet_utils import get_versions, zip_nifti, write_out_dataset_description_json
-from pet_utils.pet_utils import collect_anat_and_pet
+from petutils.petutils import get_versions, zip_nifti, write_out_dataset_description_json
+from petutils.petutils import collect_anat_and_pet
 import subprocess
 
 project_dir = pathlib.Path(__file__).parent.parent.absolute()

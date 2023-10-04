@@ -105,9 +105,3 @@ def collect_anat_and_pet(bids_data: Union[pathlib.Path, BIDSLayout], suffixes=["
                 except IndexError:
                     mapped_pet_to_anat[subject][entry.path] = ''
     return mapped_pet_to_anat
-
-def collect_pet(bids_data: Union[pathlib.Path, BIDSLayout]):
-    return None
-
-def associte_anat_pet(bids_data: Union[pathlib.Path, BIDSLayout]):
-    return None

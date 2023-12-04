@@ -3,8 +3,6 @@ import shutil
 import gzip
 import pathlib
 import json
-import pytest
-import tempfile
 from bids import BIDSLayout
 from bids.layout.models import BIDSImageFile, BIDSJSONFile
 from typing import Union

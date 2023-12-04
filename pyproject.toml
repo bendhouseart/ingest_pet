@@ -10,10 +10,10 @@ packages = [{include = "petutils"}]
 python = "^3.10"
 pybids = "^0.16.3"
 nipype = "^1.8.6"
+pytest = "^7.4.2"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.2"
 ipython = "^8.16.1"
 
 [build-system]

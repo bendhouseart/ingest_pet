@@ -76,7 +76,7 @@ def write_out_dataset_description_json(input_bids_dir, output_bids_dir=None):
 
         json.dump(dataset_description, f, indent=4)
 
-def collect_anat_and_pet(bids_data: Union[pathlib.Path, BIDSLayout], suffixes=["T1w", "T2w"], subjects: list=[]):
+def collect_anat_and_pet(bids_data: Union[pathlib.Path, BIDSLayout], suffixes=["T1w", "T2w"], subjects: list=[], check_single_subject=False):
     if type(bids_data) is BIDSLayout:
         pass
     elif isinstance(bids_data, (pathlib.PosixPath, pathlib.WindowsPath)) and bids_data.exists():
@@ -103,3 +103,87 @@ def collect_anat_and_pet(bids_data: Union[pathlib.Path, BIDSLayout], suffixes=["
                 except IndexError:
                     mapped_pet_to_anat[subject][entry.path] = ''
     return mapped_pet_to_anat
+
+class PETFrameTimingError(Exception):
+    """Raised when frame timing information is inconsistent with NIFTI header or within a sidecar JSON file."""
+    pass
+
+def check_nifti_json_frame_consistency(bids_data: Union[pathlib.Path, BIDSLayout], subjects: list=[]):
+    """
+    This function checks the consistency of the frame timing information in the NIFTI header and the sidecar JSON file as well as 
+    the number of entries between FrameTimesStart and FrameDuration within the sidecar JSON file. Intended to be used to either 
+    direcly raise a PETFrameTimingError or return a dictionary of inconsistent files for each subject.
+    
+    If you are intending to later raise errors from the output of this function returned as a dictionary you should import 
+    PETFrameTimingError from petutils and raise the error with the error string as the argument.
+
+    Parameters
+    ----------
+    bids_data : Union[pathlib.Path, BIDSLayout]
+        The path to the BIDS dataset or a BIDSLayout object.
+    subjects : list, optional
+        A list of subjects to check. If not given, all subjects in the dataset will be checked. If a single subject is given
+        then an exception will be raised if any inconsistencies are found. The default is [].
+    return : dict
+        A dictionary of dictionaries containing the inconsistent files for each subject as well as the errors found.
+        subject -> {errors: [error strings], files: {pet_file: json_file}}
+    """
+    if type(bids_data) is BIDSLayout:
+        pass
+    elif isinstance(bids_data, (pathlib.PosixPath, pathlib.WindowsPath)) and bids_data.exists():
+        bids_data = BIDSLayout(bids_data)
+    else:
+        raise TypeError(f"{bids_data} must be a BIDSLayout or valid Path object, given type: {type(bids_data)}.")
+    
+    # We change the behavior of this function to raise an error if a single subject is given otherwise it returns
+    # a dictionary of all the inconsistent files for each subject
+    if len(subjects) == 1:
+        check_single_subject = True
+    else:
+        check_single_subject = False
+
+    # return all subjects if no list of subjects is given
+    if subjects == []:
+        subjects = bids_data.get_subjects()
+
+    # inconsistent files will be stored as image files and their associated sidecar json files
+    inconsistent_files = {}
+    for subject in subjects:
+        inconsistent_files[subject] = {'errors': [], 'files': {}}
+        pet_files = bids_data.get(subject=subject, suffix="pet", extension=['nii', 'nii.gz'])
+        for entry in pet_files:
+            if type(entry) is BIDSImageFile:
+                entry_image = entry.get_image()
+                nii_frames = entry_image.header.get("dim")[4]
+                error_string = []
+                # build the path to the sidecar json
+                entry_path = pathlib.Path(entry.path)
+                if len(entry_path.suffixes) > 1:
+                    entry_json = str(entry_path).replace('.nii.gz', '.json')
+                else:
+                    entry_json = str(entry_path).replace('.nii', '.json')
+                
+                # check that each frame timing info is the correct length as implied by the nifti header
+                frame_timings = {"FrameTimesStart": len(entry.entities['FrameTimesStart']), "FrameDuration": len(entry.entities['FrameDuration'])}
+                if frame_timings["FrameTimesStart"] != frame_timings["FrameDuration"]:
+                        error_string.append(f"Number of entries for FrameTimesStart -> {frame_timings['FrameTimesStart']} and FrameDuration -> {frame_timings['FrameDuration']} do not match in {entry_json}")
+                        inconsistent_files[subject]['files'][entry.path] = entry_json
+                if frame_timings["FrameTimesStart"] != nii_frames:
+                        error_string.append(f"Number frames in {entry.path} header -> {nii_frames} does not match the number of frames in FrameTimesStart -> {frame_timings['FrameTimesStart']} at {entry_json}")
+                        inconsistent_files[subject]['files'][entry.path] = entry_json
+                if frame_timings["FrameDuration"] != nii_frames:
+                        error_string.append(f"Number frames in {entry.path} header -> {nii_frames} does not match the number of frames in FrameDuration -> {frame_timings['FrameDuration']} at {entry_json}")
+                        inconsistent_files[subject]['files'][entry.path] = entry_json
+
+                
+                if len(error_string) > 0:
+                        inconsistent_files[subject]['errors'] = error_string
+
+                if check_single_subject:
+                    # concat error string 
+                    error_string = '\n'.join(error_string)
+                    # raise error 
+                    if len(error_string) > 0:
+                        raise PETFrameTimingError(error_string)
+
+    return inconsistent_files
